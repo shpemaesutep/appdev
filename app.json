@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "shpe-app",
-    "slug": "shpe-app",
+    "name": "shpe-demo-app",
+    "slug": "shpe-demo-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "shpeapp",
+    "scheme": "shpedemoapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
