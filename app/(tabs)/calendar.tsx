@@ -3,10 +3,14 @@ import { useEffect, useState } from 'react';
 // BEFORE: import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 // AFTER: Added RefreshControl for pull-to-refresh functionality
 // AFTER: Replaced FlatList with SectionList for month-based grouping
-import { ActivityIndicator, RefreshControl, SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// AFTER: Added Dimensions for responsive sizing
+import { ActivityIndicator, Dimensions, Image, RefreshControl, SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // AFTER: Added Ionicons import for retry and empty state icons
 import { Ionicons } from '@expo/vector-icons';
+
+// AFTER: Get screen dimensions for responsive sizing
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 
 // AFTER: Extended EventItem type to include date for better display
@@ -30,6 +34,23 @@ type EventSection = {
   data: EventItem[];
   isPastDivider?: boolean; // Special flag for "Past Events" divider section
 }
+
+// AFTER: Helper function to strip HTML tags from description
+// Google Calendar API returns HTML-formatted descriptions
+const stripHtml = (html: string): string => {
+  if (!html) return '';
+  // Remove HTML tags using regex
+  return html
+    .replace(/<[^>]*>/g, '')           // Remove HTML tags
+    .replace(/&nbsp;/g, ' ')           // Replace &nbsp; with space
+    .replace(/&amp;/g, '&')            // Replace &amp; with &
+    .replace(/&lt;/g, '<')             // Replace &lt; with <
+    .replace(/&gt;/g, '>')             // Replace &gt; with >
+    .replace(/&quot;/g, '"')           // Replace &quot; with "
+    .replace(/&#39;/g, "'")            // Replace &#39; with '
+    .replace(/\s+/g, ' ')              // Collapse multiple spaces
+    .trim();                           // Trim whitespace
+};
 
 // BEFORE: export default function Index() {
 // AFTER: Renamed to Calendar for clarity - function name should match file purpose
@@ -195,8 +216,12 @@ export default function Calendar() {
           title: item.summary || "No Title",        // Event name (summary in Google Calendar API) - was "title" in old JSON
           time: timeString,                         // Formatted time string (created above) - was already formatted in old JSON
           date: dateString,                         // AFTER: Added formatted date string
+          // BEFORE: location: item.location || "TBD"
+          // AFTER: Log location for debugging, check if API returns it
           location: item.location || "TBD",         // Event location (defaults to "TBD" if not specified)
-          description: item.description || "",      // Event description/details (empty string if not provided)
+          // BEFORE: description: item.description || ""
+          // AFTER: Strip HTML from description for clean text display
+          description: stripHtml(item.description || ""),
           // AFTER: Store raw timestamp for filtering/sorting by date
           startTimestamp: dateObj.getTime(),
           // AFTER: Store monthKey for grouping
@@ -350,7 +375,15 @@ export default function Calendar() {
   if(upcomingEvents.length === 0 && (!showPastEvents || pastEvents.length === 0)) {
     return(
       <SafeAreaView style={styles.container}>
-        <Text style={styles.header}>SHPE Conference 2026</Text>
+        {/* BEFORE: <Text style={styles.header}>SHPE Conference 2026</Text> */}
+        {/* AFTER: Replaced text with logo image as requested */}
+        <View style={styles.headerContainer}>
+            <Image 
+                source={require('../../assets/images/shpemaeslogo.png')} 
+                style={styles.headerLogo}
+                resizeMode="contain"
+            />
+        </View>
         {/* AFTER: Added toggle button even on empty state for consistency */}
         <TouchableOpacity 
           style={styles.toggleButton} 
@@ -390,7 +423,15 @@ export default function Calendar() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>SHPE Conference 2026</Text>
+      {/* BEFORE: <Text style={styles.header}>SHPE Conference 2026</Text> */}
+      {/* AFTER: Replaced text with logo image as requested */}
+      <View style={styles.headerContainer}>
+        <Image 
+            source={require('../../assets/images/shpemaeslogo.png')} 
+            style={styles.headerLogo}
+            resizeMode="contain"
+        />
+      </View>
       {/* AFTER: Added "Show Past Events" toggle button */}
       <TouchableOpacity 
         style={styles.toggleButton} 
@@ -496,9 +537,19 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
-  header: {fontSize: 24, fontWeight: 'bold', color: '#002649', marginBottom: 15},
+  // BEFORE: header: {fontSize: 24, fontWeight: 'bold', color: '#002649', marginBottom: 15},
+  // AFTER: Replaced text header with logo container styling
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  // AFTER: Made logo responsive based on screen width (matching Home tab)
+  headerLogo: {
+    width: Math.min(SCREEN_WIDTH * 0.55, 220),   // 55% of screen width, max 220
+    height: Math.min(SCREEN_WIDTH * 0.18, 70),   // Proportional height
+  },
   card: {backgroundColor: 'white', padding: 15, borderRadius: 10, marginBottom: 10, shadowColor: '#000',
     shadowOffset: { width: 0, height: 2},
     shadowOpacity: 0.1, elevation: 3

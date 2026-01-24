@@ -21,6 +21,7 @@ export default function RootLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" color={color} size={size} />
           ),
+          headerShown: false,
         }}
       />
       {/* AFTER: Added details route registration to enable proper navigation */}

@@ -1,8 +1,16 @@
 // Import necessary React and React Native components
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+// AFTER: Added Image for logo display, Dimensions for responsive sizing
+import { Dimensions, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // Import FontAwesome icons from Expo vector icons library
 import { FontAwesome5 } from '@expo/vector-icons';
+
+// AFTER: Get screen dimensions for responsive sizing
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// AFTER: Responsive scaling utility - scales based on screen width
+// Base design width is 375 (iPhone SE/8 width)
+const scale = (size: number) => (SCREEN_WIDTH / 375) * size;
 
 // Define the structure for each pillar item
 type PillarItem = {
@@ -70,10 +78,14 @@ export default function Index() {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* HEADER SECTION - Logo and Organization Name */}
-        {/* TODO: Create Header Section with Logo and University Name. */}
-        {/* Difficulty: Easy */}
-        {/* Instructions: Use Image component for logo and Text for university name. ** look in the assets folder */}
+        {/* BEFORE: Empty header section with TODO comment */}
+        {/* AFTER: Added logo image for consistency with Calendar tab */}
         <View style={styles.headerSection}>
+          <Image 
+            source={require('../../assets/images/shpemaeslogo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         {/* MISSION SECTION */}
@@ -203,10 +215,11 @@ const styles = StyleSheet.create({
   },
 
   // Logo image styling
+  // AFTER: Made logo responsive based on screen width
   logo: {
-    width: 200,
-    height: 100,
-    marginBottom: 15,
+    width: Math.min(SCREEN_WIDTH * 0.55, 220),   // 55% of screen width, max 220
+    height: Math.min(SCREEN_WIDTH * 0.18, 70),   // Proportional height
+    marginBottom: 10,
   },
 
   // Organization name text
