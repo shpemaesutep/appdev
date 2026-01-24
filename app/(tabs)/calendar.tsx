@@ -1,6 +1,9 @@
 import { router } from "expo-router";
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// BEFORE: import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// AFTER: Added RefreshControl for pull-to-refresh functionality
+// AFTER: Replaced FlatList with SectionList for month-based grouping
+import { ActivityIndicator, RefreshControl, SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // AFTER: Added Ionicons import for retry and empty state icons
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +18,17 @@ type EventItem = {
   date: string;
   location: string;
   description: string;
+  // AFTER: Added startTimestamp for proper date comparison (filtering/sorting)
+  startTimestamp: number;
+  // AFTER: Added monthKey for grouping events by month (e.g., "January 2026")
+  monthKey: string;
+}
+
+// AFTER: Define section type for SectionList
+type EventSection = {
+  title: string;
+  data: EventItem[];
+  isPastDivider?: boolean; // Special flag for "Past Events" divider section
 }
 
 // BEFORE: export default function Index() {
@@ -24,11 +38,21 @@ export default function Calendar() {
   const [data, setData] = useState<EventItem[]>([]);
   // AFTER: Added error state to track API failures and show user-friendly error UI
   const [error, setError] = useState<string | null>(null);
+  // AFTER: Added refreshing state for pull-to-refresh indicator
+  const [refreshing, setRefreshing] = useState(false);
+  // AFTER: Added showPastEvents toggle (default: false - only show upcoming)
+  const [showPastEvents, setShowPastEvents] = useState(false);
 
   // AFTER: Extracted fetch logic into a reusable function for retry functionality
-  const fetchEvents = () => {
+  // BEFORE: const fetchEvents = () => {
+  // AFTER: Added isRefresh parameter to distinguish initial load from pull-to-refresh
+  const fetchEvents = (isRefresh = false) => {
     // Reset states before fetching
-    setLoading(true);
+    // BEFORE: setLoading(true);
+    // AFTER: Only show loading spinner on initial load, not on refresh
+    if (!isRefresh) {
+      setLoading(true);
+    }
     setError(null);
 
     // ========================================
@@ -145,9 +169,10 @@ export default function Calendar() {
           ? "All Day" 
           : dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-        // AFTER: Added date formatting so users know which day the event is on
+        // BEFORE: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+        // This produced "Thu, Jan 23" which was cramped
+        // AFTER: Shortened format without weekday for cleaner display
         const dateString = dateObj.toLocaleDateString('en-US', { 
-          weekday: 'short', 
           month: 'short', 
           day: 'numeric' 
         });
@@ -158,6 +183,13 @@ export default function Calendar() {
         // Map Google Calendar fields to our EventItem type:
         // OLD JSON had: id, title, time, location, description (already in correct format)
         // NEW API uses: id, summary, start.dateTime/date, location, description (needs transformation)
+        
+        // AFTER: Generate monthKey for grouping (e.g., "January 2026")
+        const monthKey = dateObj.toLocaleDateString('en-US', { 
+          month: 'long', 
+          year: 'numeric' 
+        });
+        
         return {
           id: item.id,                              // Unique event identifier from Google Calendar
           title: item.summary || "No Title",        // Event name (summary in Google Calendar API) - was "title" in old JSON
@@ -165,6 +197,10 @@ export default function Calendar() {
           date: dateString,                         // AFTER: Added formatted date string
           location: item.location || "TBD",         // Event location (defaults to "TBD" if not specified)
           description: item.description || "",      // Event description/details (empty string if not provided)
+          // AFTER: Store raw timestamp for filtering/sorting by date
+          startTimestamp: dateObj.getTime(),
+          // AFTER: Store monthKey for grouping
+          monthKey: monthKey,
         };
       }).filter(Boolean); // AFTER: Filter out null entries from malformed data
 
@@ -173,6 +209,8 @@ export default function Calendar() {
       // ========================================
       setData(mappedData);    // Store the transformed events in state
       setLoading(false);      // Hide the loading indicator
+      // AFTER: Reset refreshing state after fetch completes
+      setRefreshing(false);
     })
     .catch((err) => {
       // ========================================
@@ -183,6 +221,8 @@ export default function Calendar() {
       // AFTER: Set user-friendly error message for network failures
       setError("Unable to connect. Please check your internet connection and try again.");
       setLoading(false);
+      // AFTER: Reset refreshing state on error
+      setRefreshing(false);
     });
     // ========================================
     // END OF NEW IMPLEMENTATION
@@ -192,6 +232,76 @@ export default function Calendar() {
   useEffect(() => {
     fetchEvents();
   }, []); // Empty dependency array: run this effect only once when component mounts
+
+  // ========================================
+  // PULL-TO-REFRESH HANDLER
+  // ========================================
+  // AFTER: Added onRefresh handler for pull-to-refresh functionality
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchEvents(true); // Pass true to indicate this is a refresh, not initial load
+  };
+
+  // ========================================
+  // FILTER AND SORT EVENTS
+  // ========================================
+  // AFTER: Added logic to filter events into upcoming vs past, with proper sorting
+  const now = Date.now();
+  
+  // Separate upcoming and past events
+  const upcomingEvents = data
+    .filter(event => event.startTimestamp >= now)
+    .sort((a, b) => a.startTimestamp - b.startTimestamp); // Soonest first
+  
+  const pastEvents = data
+    .filter(event => event.startTimestamp < now)
+    .sort((a, b) => b.startTimestamp - a.startTimestamp); // Most recent first
+  
+  // BEFORE: Flat array combination
+  // const displayedEvents = showPastEvents 
+  //   ? [...upcomingEvents, ...pastEvents]
+  //   : upcomingEvents;
+  
+  // AFTER: Group events by month for SectionList
+  // Helper function to group events by monthKey
+  const groupByMonth = (events: EventItem[]): EventSection[] => {
+    const grouped: { [key: string]: EventItem[] } = {};
+    
+    events.forEach(event => {
+      if (!grouped[event.monthKey]) {
+        grouped[event.monthKey] = [];
+      }
+      grouped[event.monthKey].push(event);
+    });
+    
+    // Convert to sections array, preserving month order from sorted events
+    const monthOrder: string[] = [];
+    events.forEach(event => {
+      if (!monthOrder.includes(event.monthKey)) {
+        monthOrder.push(event.monthKey);
+      }
+    });
+    
+    return monthOrder.map(month => ({
+      title: month,
+      data: grouped[month],
+    }));
+  };
+  
+  // Create sections for upcoming events
+  const upcomingSections = groupByMonth(upcomingEvents);
+  
+  // Create sections for past events (if enabled)
+  const pastSections = showPastEvents && pastEvents.length > 0
+    ? [
+        // Add "Past Events" divider section (empty data, just a header)
+        { title: '___PAST_DIVIDER___', data: [] as EventItem[], isPastDivider: true },
+        ...groupByMonth(pastEvents)
+      ]
+    : [];
+  
+  // Combine all sections
+  const sections: EventSection[] = [...upcomingSections, ...pastSections];
 
   // ========================================
   // LOADING STATE UI
@@ -221,7 +331,7 @@ export default function Calendar() {
           <Ionicons name="cloud-offline-outline" size={64} color="#D25100" />
           <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
           <Text style={styles.errorMessage}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchEvents()}>
             <Ionicons name="refresh" size={20} color="#FFFFFF" />
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
@@ -233,17 +343,43 @@ export default function Calendar() {
   // ========================================
   // EMPTY STATE UI
   // ========================================
-  // AFTER: Added empty state UI - shows when calendar has no events
-  // Provides clear message so users understand why the list is empty
-  if(data.length === 0) {
+  // BEFORE: if(data.length === 0) - checked all data regardless of filters
+  // BEFORE: if(displayedEvents.length === 0) - checked flat array
+  // AFTER: Check sections array for grouped empty state
+  // Also added context-aware messages based on whether showing past events
+  if(upcomingEvents.length === 0 && (!showPastEvents || pastEvents.length === 0)) {
     return(
       <SafeAreaView style={styles.container}>
         <Text style={styles.header}>SHPE Conference 2026</Text>
+        {/* AFTER: Added toggle button even on empty state for consistency */}
+        <TouchableOpacity 
+          style={styles.toggleButton} 
+          onPress={() => setShowPastEvents(!showPastEvents)}
+        >
+          <Ionicons 
+            name={showPastEvents ? "eye" : "eye-off-outline"} 
+            size={18} 
+            color="#666" 
+          />
+          <Text style={styles.toggleButtonText}>
+            {showPastEvents ? "Hide Past Events" : "Show Past Events"}
+          </Text>
+        </TouchableOpacity>
         <View style={styles.centerContainer}>
           <Ionicons name="calendar-outline" size={64} color="#999" />
-          <Text style={styles.emptyTitle}>No Events Scheduled</Text>
-          <Text style={styles.emptyMessage}>Check back later for upcoming events!</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
+          {/* BEFORE: Generic "No Events Scheduled" message */}
+          {/* AFTER: Context-aware messages based on filter state */}
+          <Text style={styles.emptyTitle}>
+            {showPastEvents 
+              ? "No Events Found" 
+              : "No Upcoming Events"}
+          </Text>
+          <Text style={styles.emptyMessage}>
+            {showPastEvents 
+              ? "There are no events in the calendar." 
+              : "Check back later for upcoming events!"}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchEvents()}>
             <Ionicons name="refresh" size={20} color="#FFFFFF" />
             <Text style={styles.retryButtonText}>Refresh</Text>
           </TouchableOpacity>
@@ -255,12 +391,59 @@ export default function Calendar() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>SHPE Conference 2026</Text>
-      <FlatList
-        data={data}
-        keyExtractor = {(item) => item.id }
+      {/* AFTER: Added "Show Past Events" toggle button */}
+      <TouchableOpacity 
+        style={styles.toggleButton} 
+        onPress={() => setShowPastEvents(!showPastEvents)}
+      >
+        <Ionicons 
+          name={showPastEvents ? "eye" : "eye-off-outline"} 
+          size={18} 
+          color="#666" 
+        />
+        <Text style={styles.toggleButtonText}>
+          {showPastEvents ? "Hide Past Events" : "Show Past Events"}
+        </Text>
+      </TouchableOpacity>
+      {/* BEFORE: FlatList with flat data array */}
+      {/* AFTER: SectionList with month-grouped sections */}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item: EventItem) => item.id}
         // AFTER: Added contentContainerStyle for home indicator clearance on newer iPhones
         contentContainerStyle={styles.listContent}
-        renderItem = {({item}) => (
+        // AFTER: Added RefreshControl for native pull-to-refresh
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#D25100"
+            colors={["#D25100"]} // Android
+          />
+        }
+        // AFTER: Render section headers (month names or Past Events divider)
+        renderSectionHeader={({ section }: { section: EventSection }) => {
+          // Special handling for Past Events divider
+          if (section.isPastDivider) {
+            return (
+              <View style={styles.pastEventsDivider}>
+                <View style={styles.dividerLine} />
+                <View style={styles.pastEventsLabelContainer}>
+                  <Ionicons name="time-outline" size={16} color="#888" />
+                  <Text style={styles.pastEventsLabel}>Past Events</Text>
+                </View>
+                <View style={styles.dividerLine} />
+              </View>
+            );
+          }
+          // Regular month header
+          return (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>{section.title}</Text>
+            </View>
+          );
+        }}
+        renderItem={({ item }: { item: EventItem }) => (
           // BEFORE: style={styles.card}onPress - missing space
           // AFTER: Added space between style and onPress
           <TouchableOpacity 
@@ -285,10 +468,11 @@ export default function Calendar() {
             }}
           >
             <View style={styles.row}>
-              {/* AFTER: Added date display above time for clarity */}
+              {/* BEFORE: Date on top, time below - felt awkward */}
+              {/* AFTER: Time on top (more glanceable), date below for context */}
               <View style={styles.timeContainer}>
-                <Text style={styles.date}>{item.date}</Text>
                 <Text style={styles.time}>{item.time}</Text>
+                <Text style={styles.date}>{item.date}</Text>
               </View>
               <View style={styles.info}>
                 <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
@@ -297,6 +481,8 @@ export default function Calendar() {
             </View>
           </TouchableOpacity>
         )}
+        // AFTER: Don't render empty sections (except for past divider which has no items)
+        stickySectionHeadersEnabled={false}
       />
     </SafeAreaView>
   );
@@ -318,22 +504,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, elevation: 3
   },
   row: { flexDirection: 'row', alignItems: 'center'},
-  // BEFORE: timeContainer: { width: 80, marginRight: 10 }
-  // AFTER: Changed to minWidth for better flexibility on different screen sizes
-  // Issue: Fixed width could cause text clipping on small phones or not use space on large phones
+  // BEFORE: timeContainer minWidth: 75, maxWidth: 90 - too cramped for date format
+  // AFTER: Adjusted for cleaner time-first layout
   timeContainer: { 
-    minWidth: 75,
-    maxWidth: 90,
-    marginRight: 12,
+    minWidth: 70,
+    marginRight: 14,
+    alignItems: 'flex-start',
   },
-  // AFTER: Added date style for the new date display
+  // BEFORE: date was on top with smaller font
+  // AFTER: Date below time, slightly muted for visual hierarchy
   date: { 
-    fontWeight: 'bold', 
-    color: '#002649', 
+    color: '#666', 
     fontSize: 12,
-    marginBottom: 2,
+    marginTop: 3,
   },
-  time: { fontWeight: 'bold', color: '#D24100'},
+  // BEFORE: time had no fontSize
+  // AFTER: Explicit sizing, time is primary info so it stands out
+  time: { 
+    fontWeight: 'bold', 
+    color: '#D25100',
+    fontSize: 14,
+  },
   info: {flex: 1},
   title: {fontWeight: 'bold', fontSize: 16, color: '#333'},
   location: {color: 'gray', fontSize: 12, marginTop: 4},
@@ -386,5 +577,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  // AFTER: Added styles for "Show Past Events" toggle button
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  toggleButtonText: {
+    marginLeft: 6,
+    fontSize: 14,
+    color: '#666',
+  },
+  // AFTER: Added styles for month section headers
+  sectionHeader: {
+    backgroundColor: '#F5F5F5',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginTop: 5,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#002649',
+  },
+  // AFTER: Added styles for "Past Events" divider
+  pastEventsDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    paddingHorizontal: 10,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#CCCCCC',
+  },
+  pastEventsLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 16,
+  },
+  pastEventsLabel: {
+    marginLeft: 6,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#888',
   },
 })
