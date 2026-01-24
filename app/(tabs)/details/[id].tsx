@@ -7,13 +7,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EventDetails() {
     const params = useLocalSearchParams();
-    // AFTER: Added date to destructured params since we now pass it from calendar
-    const { title, description, time, date, location } = params;
+    // AFTER: Updated to use startTime/endTime instead of old time param
+    const { title, description, startTime, endTime, date, location } = params;
     const navigation = useNavigation();
 
     useEffect(() => {
         navigation.setOptions({title: params.title});
     }, [params.title]);
+
+    // Format the time display - show "startTime to endTime" or just "startTime" if no end
+    const formatTimeDisplay = () => {
+        if (!startTime) return "Time not specified";
+        if (endTime) return `${startTime} to ${endTime}`;
+        return String(startTime);
+    };
 
     return(
         // BEFORE: <View> with no styling
@@ -44,9 +51,9 @@ export default function EventDetails() {
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Date & Time</Text>
-                        {/* AFTER: Display both date and time if available */}
+                        {/* AFTER: Display date and formatted time range */}
                         <Text style={styles.infoValue}>
-                            {date ? `${date} • ` : ""}{time || "Time not specified"}
+                            {date ? `${date} • ` : ""}{formatTimeDisplay()}
                         </Text>
                     </View>
                 </View>

@@ -17,13 +17,18 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type EventItem = {
   id: string;
   title: string;
-  time: string;
+  // Start time display string (e.g., "02:00 PM" or "All Day")
+  startTime: string;
+  // End time display string (e.g., "03:30 PM" or empty for all-day)
+  endTime: string;
   // AFTER: Added date field to show users which day events occur
   date: string;
   location: string;
   description: string;
   // AFTER: Added startTimestamp for proper date comparison (filtering/sorting)
   startTimestamp: number;
+  // AFTER: Added endTimestamp to determine when event is truly over
+  endTimestamp: number;
   // AFTER: Added monthKey for grouping events by month (e.g., "January 2026")
   monthKey: string;
 }
@@ -63,6 +68,8 @@ export default function Calendar() {
   const [refreshing, setRefreshing] = useState(false);
   // AFTER: Added showPastEvents toggle (default: false - only show upcoming)
   const [showPastEvents, setShowPastEvents] = useState(false);
+  // AFTER: Added currentTime state to force re-render for real-time event filtering
+  const [currentTime, setCurrentTime] = useState(Date.now());
 
   // AFTER: Extracted fetch logic into a reusable function for retry functionality
   // BEFORE: const fetchEvents = () => {
@@ -175,20 +182,35 @@ export default function Calendar() {
         // dateTime: Used for events with specific times (e.g., "2025-12-15T14:00:00-07:00")
         // date: Used for all-day events (e.g., "2025-12-15")
         const start = item.start.dateTime || item.start.date;
+        const end = item.end?.dateTime || item.end?.date;
         
         // Convert the ISO 8601 date string to a JavaScript Date object
         // This allows us to format the time according to our needs
         const dateObj = new Date(start);
+        const endDateObj = end ? new Date(end) : null;
+        
+        // Check if we have a real end time (different from start)
+        const hasRealEndTime = endDateObj && endDateObj.getTime() !== dateObj.getTime();
+        
+        // For past events logic: if no end time, assume 1 hour after start
+        const endTimestampForFiltering = hasRealEndTime 
+          ? endDateObj.getTime() 
+          : dateObj.getTime() + (60 * 60 * 1000); // 1 hour in milliseconds
         
         // ========================================
-        // FORMAT TIME STRING
+        // FORMAT TIME STRINGS
         // ========================================
         // Check if this is an all-day event (only has 'date', no 'dateTime')
-        // - All-day events: Display "All Day"
-        // - Timed events: Format as 12-hour time with AM/PM (e.g., "02:00 PM")
-        const timeString = item.start.date 
+        // - All-day events: Display "All Day" for start, empty for end
+        // - Timed events: Show end time only if explicitly provided
+        const isAllDay = !!item.start.date;
+        const startTimeStr = isAllDay 
           ? "All Day" 
-          : dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+          : dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        // Only show end time if it's a real end time (not same as start, not assumed)
+        const endTimeStr = isAllDay || !hasRealEndTime
+          ? "" 
+          : endDateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
         // BEFORE: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
         // This produced "Thu, Jan 23" which was cramped
@@ -214,7 +236,8 @@ export default function Calendar() {
         return {
           id: item.id,                              // Unique event identifier from Google Calendar
           title: item.summary || "No Title",        // Event name (summary in Google Calendar API) - was "title" in old JSON
-          time: timeString,                         // Formatted time string (created above) - was already formatted in old JSON
+          startTime: startTimeStr,                  // Start time or "All Day"
+          endTime: endTimeStr,                      // End time (empty for all-day events)
           date: dateString,                         // AFTER: Added formatted date string
           // BEFORE: location: item.location || "TBD"
           // AFTER: Log location for debugging, check if API returns it
@@ -224,6 +247,9 @@ export default function Calendar() {
           description: stripHtml(item.description || ""),
           // AFTER: Store raw timestamp for filtering/sorting by date
           startTimestamp: dateObj.getTime(),
+          // AFTER: Store end timestamp for determining when event is truly over
+          // Uses assumed 1 hour duration if no end time provided
+          endTimestamp: endTimestampForFiltering,
           // AFTER: Store monthKey for grouping
           monthKey: monthKey,
         };
@@ -259,6 +285,19 @@ export default function Calendar() {
   }, []); // Empty dependency array: run this effect only once when component mounts
 
   // ========================================
+  // REAL-TIME EVENT FILTERING TIMER
+  // ========================================
+  // AFTER: Added timer to update currentTime every minute
+  // This forces the event filtering to recalculate, moving events to "Past" in real-time
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000); // Update every 60 seconds
+    
+    return () => clearInterval(timer); // Cleanup on unmount
+  }, []);
+
+  // ========================================
   // PULL-TO-REFRESH HANDLER
   // ========================================
   // AFTER: Added onRefresh handler for pull-to-refresh functionality
@@ -271,15 +310,17 @@ export default function Calendar() {
   // FILTER AND SORT EVENTS
   // ========================================
   // AFTER: Added logic to filter events into upcoming vs past, with proper sorting
-  const now = Date.now();
+  // Events are now considered "past" only after their END time, not start time
+  // Uses currentTime state (updated every minute) instead of Date.now() for real-time updates
+  const now = currentTime;
   
-  // Separate upcoming and past events
+  // Separate upcoming and past events (using endTimestamp for past event cutoff)
   const upcomingEvents = data
-    .filter(event => event.startTimestamp >= now)
+    .filter(event => event.endTimestamp >= now)
     .sort((a, b) => a.startTimestamp - b.startTimestamp); // Soonest first
   
   const pastEvents = data
-    .filter(event => event.startTimestamp < now)
+    .filter(event => event.endTimestamp < now)
     .sort((a, b) => b.startTimestamp - a.startTimestamp); // Most recent first
   
   // BEFORE: Flat array combination
@@ -497,9 +538,9 @@ export default function Calendar() {
                 params: {
                   id: item.id,
                   title: item.title,
-                  // BEFORE: time was not passed to details screen
-                  // AFTER: Now passing time so details screen can display it
-                  time: item.time,
+                  // Pass both start and end times to details screen
+                  startTime: item.startTime,
+                  endTime: item.endTime,
                   // AFTER: Also passing date for complete event info
                   date: item.date,
                   location: item.location,
@@ -509,10 +550,12 @@ export default function Calendar() {
             }}
           >
             <View style={styles.row}>
-              {/* BEFORE: Date on top, time below - felt awkward */}
-              {/* AFTER: Time on top (more glanceable), date below for context */}
+              {/* Time column: start time on top, "to end time" below, then date */}
               <View style={styles.timeContainer}>
-                <Text style={styles.time}>{item.time}</Text>
+                <Text style={styles.startTime}>{item.startTime}</Text>
+                {item.endTime ? (
+                  <Text style={styles.endTime}>to {item.endTime}</Text>
+                ) : null}
                 <Text style={styles.date}>{item.date}</Text>
               </View>
               <View style={styles.info}>
@@ -558,23 +601,28 @@ const styles = StyleSheet.create({
   // BEFORE: timeContainer minWidth: 75, maxWidth: 90 - too cramped for date format
   // AFTER: Adjusted for cleaner time-first layout
   timeContainer: { 
-    minWidth: 70,
+    minWidth: 75,
     marginRight: 14,
     alignItems: 'flex-start',
   },
-  // BEFORE: date was on top with smaller font
-  // AFTER: Date below time, slightly muted for visual hierarchy
-  date: { 
-    color: '#666', 
-    fontSize: 12,
-    marginTop: 3,
-  },
-  // BEFORE: time had no fontSize
-  // AFTER: Explicit sizing, time is primary info so it stands out
-  time: { 
-    fontWeight: 'bold', 
+  // Start time - primary, bold, orange
+  startTime: { 
+    fontWeight: '600', 
     color: '#D25100',
     fontSize: 14,
+  },
+  // End time - smaller with "to" prefix
+  endTime: { 
+    color: '#D25100',
+    fontSize: 10,
+    marginTop: 2,
+    opacity: 0.85,
+  },
+  // Date below times, muted for visual hierarchy
+  date: { 
+    color: '#666', 
+    fontSize: 11,
+    marginTop: 4,
   },
   info: {flex: 1},
   title: {fontWeight: 'bold', fontSize: 16, color: '#333'},
