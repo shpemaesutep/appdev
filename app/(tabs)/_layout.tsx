@@ -1,5 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import {Ionicons} from '@expo/vector-icons';
 
 export default function RootLayout() {
   return (
@@ -21,6 +21,16 @@ export default function RootLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" color={color} size={size} />
           ),
+          headerShown: false,
+        }}
+      />
+      {/* AFTER: Added details route registration to enable proper navigation */}
+      {/* href: null hides it from the tab bar while still allowing navigation to work */}
+      <Tabs.Screen
+        name="details"
+        options={{
+          href: null,
+          headerShown: false,
         }}
       />
     </Tabs>
