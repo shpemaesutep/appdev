@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
   headerAccentBar: {
     height: 6,
     borderRadius: 999,
-    backgroundColor:" #FF8200",
+    backgroundColor: " #FF8200",
     marginBottom: 14,
     opacity: 0.95,
   },
@@ -219,6 +219,52 @@ export const styles = StyleSheet.create({
     color: "#777",
     marginBottom: 16,
   },
+  contributorsSection: {
+    marginHorizontal: 15,
+    marginTop: 25,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
 
+  contributorsTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+  },
 
+  contributorsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+  },
+
+  // BEFORE: width/height: 36 (slightly small for touch targets if interactive)
+  // AFTER: Increased to 40 for better visibility and potential tap target
+  contributorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E8EEF4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+
+  contributorInitials: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#667788',
+  },
+
+  contributorsSubtitle: {
+    fontSize: 11,
+    color: '#AAA',
+    marginTop: 10,
+    fontStyle: 'italic',
+  },
 });
+
+
+

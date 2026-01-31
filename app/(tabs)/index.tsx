@@ -149,7 +149,6 @@ export default function Index() {
         <View style={styles.pillarsHeaderContainer}>
           <Text style={styles.pillarsHeader}>Our 6 Pillars</Text>
         </View>
-
         {/* Map through each pillar and render individual cards */}
         {/* TODO: Create Pillars Section. Map through the pillars array. */}
         {/* Difficulty: Medium */}
@@ -227,6 +226,22 @@ export default function Index() {
             </Animated.View>
           );
         })}
+        <View style={styles.contributorsSection}>
+          <Text style={styles.contributorsTitle}>Contributors</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.contributorsRow}
+          >
+            {/* Placeholder contributors - replace names when available */}
+            {['JD', 'MC', 'AR', 'LS', 'KP', 'TR', 'MG', 'DS', 'CH', 'NR'].map((initials, index) => (
+              <View key={index} style={styles.contributorAvatar}>
+                <Text style={styles.contributorInitials}>{initials}</Text>
+              </View>
+            ))}
+          </ScrollView>
+          <Text style={styles.contributorsSubtitle}>Thank you to everyone who made this app possible</Text>
+        </View>
         <View style={styles.footer}>
           <Text style={styles.footerTitle}>SHPE // MAES UTEP</Text>
           <Text style={styles.footerSubtitle}>Empowering the next generation of engineers</Text>
