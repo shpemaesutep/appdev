@@ -1,9 +1,12 @@
 // Import necessary React and React Native components
 // AFTER: Added Image for logo display, Dimensions for responsive sizing
-import { Dimensions, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Dimensions, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { styles } from "../styles/index.styles";
+
 // Import FontAwesome icons from Expo vector icons library
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { useRef, useEffect } from "react";
 
 // AFTER: Get screen dimensions for responsive sizing
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -21,7 +24,7 @@ type PillarItem = {
   description: string;
 }
 
-export default function Index() {
+export default function Index() { 
   // Data array containing all 6 pillars with their respective icons and descriptions
   const pillars: PillarItem[] = [
     // TODO: Populate this array with the 6 pillars data.
@@ -30,46 +33,68 @@ export default function Index() {
     {
       id: "academic",
       icon: "graduation-cap",
-      color: "#FF7A3C",
+      color: "#9CA3AF",
       title: "Academic Development",
       description: "Supporting students with resources and metorship to excel academically.",
     },
     {
       id: "career",
       icon: "briefcase",
-      color: "#004AAD",
+      color: "#012f6b",
       title: "Career Development",
       description: "Building community and inclusivity through events that strengthen chapter culture.",
     },
     {
       id: "community",
       icon: "hands-helping",
-      color: "#1FAA59",
+      color: "#0B1F3A",
       title: "Community Outreach",
       description: "Giving back to El Paso through volunteering and STEM education initiatives.",
     },
     {
       id: "leadership",
       icon: "calendar-check",
-      color: "#FF7A3C",
+      color: "#9CA3AF",
       title: "Leadership Development",
       description: "Providing opportunities for members to grow into confident, capable leaders.",
     },
     {
       id: "professional",
       icon: "user-tie",
-      color: "#004AAD",
+      color: "#012f6b",
       title: "Professional Development",
       description: "Connecting students to industry professionals and career resources."
     },
     {
       id: "technical",
       icon: "laptop-code",
-      color: "#1FAA59",
+      color: "#0B1F3A",
       title: "Technical Development",
       description: "Cultivating technical skills through workships, coding projects, and innovation labs.",
     }
   ];
+
+  // Animation values for each pillar
+  const fadeTranslateValues = useRef(
+    pillars.map(() => new Animated.Value(0))
+  ).current;
+
+  const scaleValues = useRef(
+    pillars.map(() => new Animated.Value(1))
+  ).current;
+
+  useEffect(() => {
+    const animationsSequence = fadeTranslateValues.map((anim, index) =>
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 400,
+        delay: index * 120,
+        useNativeDriver: true,
+      })
+    );
+
+    Animated.stagger(120, animationsSequence).start();
+  }, [fadeTranslateValues]);
 
   return (
     // SafeAreaView ensures content doesn't overlap with device notches/status bars
@@ -81,8 +106,8 @@ export default function Index() {
         {/* BEFORE: Empty header section with TODO comment */}
         {/* AFTER: Added logo image for consistency with Calendar tab */}
         <View style={styles.headerSection}>
-          <Image 
-            source={require('../../assets/images/shpemaeslogo.png')} 
+          <Image
+            source={require('../../assets/images/shpemaeslogo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -94,11 +119,11 @@ export default function Index() {
         {/* Instructions: Add a section header with icon and title, and body text for the mission. */}
         <View style={styles.textSection}>
           <View style={styles.sectionHeader}>
-            <FontAwesome5 name="bullseye" size={20} color="#0477e3ff" solid />
+            <FontAwesome5 name="bullseye" size={20} color="#012f6b" solid />
             <Text style={styles.sectionTitle}>Our Mission</Text>
           </View>
-          <Text style={styles.bodyText}>Engage UTEP and El Paso students through academic, 
-            leadeership, professional, and service opportunities in support of their growth opportunities 
+          <Text style={styles.bodyText}>Engage UTEP and El Paso students through academic,
+            leadeership, professional, and service opportunities in support of their growth opportunities
             in support of their growth as STEM professionals.
           </Text>
         </View>
@@ -109,10 +134,10 @@ export default function Index() {
         {/* Instructions: Add a section header with icon and title, and body text for the vision. */}
         <View style={styles.textSection}>
           <View style={styles.sectionHeader}>
-            <FontAwesome5 name="eye" size={20} color="#86DC3D" solid />
+            <FontAwesome5 name="eye" size={20} color="#012f6b" solid />
             <Text style={styles.sectionTitle}>Our Vision</Text>
           </View>
-          <Text style={styles.bodyText}>To be the model organization that develops socially responsible STEM 
+          <Text style={styles.bodyText}>To be the model organization that develops socially responsible STEM
             professionals who make a lasting STEM professionals who
             make a lasting impact and serve as role models within their communities.
           </Text>
@@ -123,316 +148,117 @@ export default function Index() {
         {/* Difficulty: Easy */}
         <View style={styles.pillarsHeaderContainer}>
           <Text style={styles.pillarsHeader}>Our 6 Pillars</Text>
+          <Text style={styles.pillarsHeader}>Our 6 Pillars</Text>
         </View>
 
         {/* Map through each pillar and render individual cards */}
         {/* TODO: Create Pillars Section. Map through the pillars array. */}
         {/* Difficulty: Medium */}
         {/* Instructions: Use pillars.map() to render a View for each pillar. Display icon, title, and description. */}
-        {pillars.map((pillar) => (
-          <View key={pillar.id} style={styles.pillarSection}>
-            <View style={styles.pillarCard}>
-              <View style={[styles.iconContainer, {backgroundColor: pillar.color}]}>
-                <FontAwesome5
-                  name = {pillar.icon as any}
-                  size = {24}
-                  color = "#FFFFFF"
-                  solid
-                  />
-              </View>
-              <View style = {styles.pillarContent}>
-                <Text style = {styles.pillarTitle}>{pillar.title}</Text>
-                <Text style = {styles.pillarDescription}>{pillar.description}</Text>
-              </View>
-            </View>
-          </View>
-        ))}
+        {pillars.map((pillar, index) => {
+          const fadeTranslate = fadeTranslateValues[index];
+          const scale = scaleValues[index];
 
-        {/* CONTRIBUTORS SECTION - Small, subtle section showing app contributors */}
-        <View style={styles.contributorsSection}>
-          <Text style={styles.contributorsTitle}>Contributors</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.contributorsRow}
-          >
-            {/* Placeholder contributors - replace names when available */}
-            {['JD', 'MC', 'AR', 'LS', 'KP', 'TR', 'MG', 'DS', 'CH', 'NR'].map((initials, index) => (
-              <View key={index} style={styles.contributorAvatar}>
-                <Text style={styles.contributorInitials}>{initials}</Text>
-              </View>
-            ))}
-          </ScrollView>
-          <Text style={styles.contributorsSubtitle}>Thank you to everyone who made this app possible</Text>
-        </View>
+          const animatedStyle = {
+            opacity: fadeTranslate,
+            transform: [
+              {
+                translateY: fadeTranslate.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0], // slide up
+                }),
+              },
+              { scale },
+            ],
+          };
 
-        {/* FOOTER SECTION - Organization tagline */}
-        {/* TODO: Create Footer with Social Icons. */}
-        {/* Difficulty: Easy */}
-        {/* Instructions: Add footer title, subtitle, and social media icons. */}
+          const handlePressIn = () => {
+            Animated.spring(scale, {
+              toValue: 0.97,
+              useNativeDriver: true,
+              speed: 20,
+              bounciness: 4,
+            }).start();
+          };
+
+          const handlePressOut = () => {
+            Animated.spring(scale, {
+              toValue: 1,
+              useNativeDriver: true,
+              speed: 20,
+              bounciness: 4,
+            }).start();
+          };
+
+          return (
+            <Animated.View
+              key={pillar.id}
+              style={[styles.pillarSection, animatedStyle]}
+            >
+              <Pressable
+                android_ripple={{ color: '#e0e0e0', borderless: false }}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+              >
+                <View style={styles.pillarCard}>
+                  {/* Icon */}
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      { backgroundColor: pillar.color },
+                    ]}
+                  >
+                    <FontAwesome5
+                      name={pillar.icon as any}
+                      size={24}
+                      color="#FFFFFF"
+                      solid
+                    />
+                  </View>
+
+                  {/* Text */}
+                  <View style={styles.pillarContent}>
+                    <Text style={styles.pillarTitle}>{pillar.title}</Text>
+                    <Text style={styles.pillarDescription}>
+                      {pillar.description}
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </Animated.View>
+          );
+        })}
         <View style={styles.footer}>
-          <Text style={styles.footerTitle}>SHPE/MAES</Text>
-          <Text style={styles.footerSubtitle}>Leading Hispanics In STEM at the University of Texas at El Paso</Text>
-          {/* TODO: Uncomment and add proper imports for TouchableOpacity and Ionicons */}
-          {/* <TouchableOpacity style = {styles.socialContainer}>
-          <a href="https://facebook.com/utepmaesshpe" target="_blank">
-            <Ionicons style = {styles.socialIcon} name='logo-facebook'/>
-          </a>
-          <a href="https://www.instagram.com/utepshpemaes" target="_blank">
-            <Ionicons style = {styles.socialIcon} name='logo-instagram'/>
-          </a>
-          <a href="https://www.linkedin.com/company/utep-shpe-maes-engineering" target="_blank">
-            <Ionicons style = {styles.socialIcon} name='logo-linkedin'/>
-          </a>
-          </TouchableOpacity> */}
-    
-        </View>
+          <Text style={styles.footerTitle}>SHPE // MAES UTEP</Text>
+          <Text style={styles.footerSubtitle}>Empowering the next generation of engineers</Text>
 
-        {/* BOTTOM TAB BAR SPACER */}
-        <View style={styles.bottomSpacer} />
+          <View style={styles.socialContainer}>
+            <Pressable
+              style={({ pressed }) => [styles.socialButton, pressed && styles.socialPressed]}
+              onPress={() => Linking.openURL("https://facebook.com/utepmaesshpe")}
+            >
+              <Ionicons name="logo-facebook" size={22} color="#002649" />
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [styles.socialButton, pressed && styles.socialPressed]}
+              onPress={() => Linking.openURL("https://www.instagram.com/utepshpemaes")}
+            >
+              <Ionicons name="logo-instagram" size={22} color="#002649" />
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [styles.socialButton, pressed && styles.socialPressed]}
+              onPress={() => Linking.openURL("https://www.linkedin.com/company/utep-shpe-maes-engineering")}
+            >
+              <Ionicons name="logo-linkedin" size={22} color="#002649" />
+            </Pressable>
+          </View>
+        </View>
 
       </ScrollView>
     </SafeAreaView>
   );
+  
 }
 
-// Stylesheet defining all visual styles for the component
-const styles = StyleSheet.create({
-  // Main container with gradient-like background
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA'
-  },
-
-  // Header section containing logo and org name
-  // BEFORE: backgroundColor: 'linear-gradient(135deg, #E8F4F8 0%, #F0F8E8 100%)',
-  // AFTER: Replaced with solid color - linear-gradient is not supported in React Native
-  headerSection: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    backgroundColor: '#E8F4F8',
-  },
-
-  // Logo image styling
-  // AFTER: Made logo responsive based on screen width
-  logo: {
-    width: Math.min(SCREEN_WIDTH * 0.55, 220),   // 55% of screen width, max 220
-    height: Math.min(SCREEN_WIDTH * 0.18, 70),   // Proportional height
-    marginBottom: 10,
-  },
-
-  // Organization name text
-  orgName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#002649',
-    marginBottom: 5,
-  },
-
-  // University name text
-  university: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#666',
-    letterSpacing: 1,
-  },
-
-  // Generic section container
-  section: {
-    backgroundColor: 'white',
-    marginHorizontal: 15,
-    marginTop: 15,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  // Text section without container (for Mission/Vision)
-  textSection: {
-    backgroundColor: '#F8F9FA',
-    marginHorizontal: 15,
-    marginTop: 15,
-    padding: 20,
-    borderRadius: 15,
-  },
-
-  // Section header with icon and title
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-
-  // Section title text
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#002649',
-    marginLeft: 10,
-  },
-
-  // Body text for mission/vision
-  bodyText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#444',
-  },
-
-  // "Our 6 Pillars" header container
-  pillarsHeaderContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 20,
-    paddingBottom: 5,
-  },
-
-  // "Our 6 Pillars" header
-  pillarsHeader: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#002649',
-    textAlign: 'center',
-  },
-
-  // Individual pillar section (white card container)
-  pillarSection: {
-    backgroundColor: 'white',
-    marginHorizontal: 15,
-    marginTop: 15,
-    padding: 15,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  // Individual pillar card content
-  pillarCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  // Icon container with colored background
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-
-  // Pillar text content container
-  pillarContent: {
-    flex: 1,
-  },
-
-  // Pillar title
-  pillarTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#002649',
-    marginBottom: 4,
-  },
-
-  // Pillar description
-  pillarDescription: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-  },
-
-  // Footer section
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-  },
-
-  // Footer title
-  footerTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#002649',
-    marginBottom: 5,
-  },
-
-  // Footer subtitle
-  footerSubtitle: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-
-  // Social media icons container
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // Spacing between social icons
-  socialIcon: {
-    marginLeft: 20,
-  },
-
-  // BEFORE: height: 20 (too small for newer iPhones with home indicator)
-  // AFTER: Increased for better clearance on all iPhone models
-  bottomSpacer: {
-    height: 40,
-  },
-
-  // Contributors section - subtle, minimal styling
-  contributorsSection: {
-    marginHorizontal: 15,
-    marginTop: 25,
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-
-  contributorsTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#999',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 12,
-  },
-
-  contributorsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 10,
-  },
-
-  // BEFORE: width/height: 36 (slightly small for touch targets if interactive)
-  // AFTER: Increased to 40 for better visibility and potential tap target
-  contributorAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E8EEF4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-
-  contributorInitials: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#667788',
-  },
-
-  contributorsSubtitle: {
-    fontSize: 11,
-    color: '#AAA',
-    marginTop: 10,
-    fontStyle: 'italic',
-  },
-});

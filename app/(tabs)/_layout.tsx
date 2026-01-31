@@ -3,7 +3,16 @@ import { Tabs } from 'expo-router';
 
 export default function RootLayout() {
   return (
-    <Tabs>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: "#0B1F3A",   // active (selected)
+        tabBarInactiveTintColor: "#9CA3AF", // inactive
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopColor: "#E5E5E5",
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
@@ -24,8 +33,6 @@ export default function RootLayout() {
           headerShown: false,
         }}
       />
-      {/* AFTER: Added details route registration to enable proper navigation */}
-      {/* href: null hides it from the tab bar while still allowing navigation to work */}
       <Tabs.Screen
         name="details"
         options={{

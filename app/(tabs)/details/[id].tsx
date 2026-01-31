@@ -84,10 +84,10 @@ export default function EventDetails() {
                 {/* RSVP Button */}
                 {/* BEFORE: Unstyled TouchableOpacity with plain text */}
                 {/* AFTER: Properly styled button matching app design */}
-                <TouchableOpacity style={styles.rsvpButton} onPress={() => alert("RSVP Done!")}>
+                {/* <TouchableOpacity style={styles.rsvpButton} onPress={() => alert("RSVP Done!")}>
                     <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
                     <Text style={styles.rsvpButtonText}>RSVP for this Event</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 {/* Bottom Spacer */}
                 <View style={styles.bottomSpacer} />
