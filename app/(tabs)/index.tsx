@@ -148,7 +148,6 @@ export default function Index() {
         {/* Difficulty: Easy */}
         <View style={styles.pillarsHeaderContainer}>
           <Text style={styles.pillarsHeader}>Our 6 Pillars</Text>
-          <Text style={styles.pillarsHeader}>Our 6 Pillars</Text>
         </View>
 
         {/* Map through each pillar and render individual cards */}
