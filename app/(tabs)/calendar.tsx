@@ -119,7 +119,7 @@ export default function Calendar() {
     //const API_KEY = "AIzaSyDe3pSzYXT0tMWFrl3q40lWur1Lls-MEZQ"; 
     
     // This is the API key for the Google Calendar API
-    const API_KEY = "";
+    const API_KEY = "AIzaSyBIx6nTl2niOG6yD17L-jua2X-u-j2mFBU";
 
 
     // Calendar ID: Unique identifier for the specific Google Calendar we want to fetch events from
@@ -128,8 +128,7 @@ export default function Calendar() {
     //const CALENDAR_ID = "shpemaesutep@gmail.com";
     
     // This is the Calendar ID for the mock Google Calendar
-    const CALENDAR_ID = "";
-
+    
     // ========================================
     // BUILD API REQUEST URL
     // ========================================
@@ -138,9 +137,7 @@ export default function Calendar() {
     // - key=${API_KEY}: Authentication parameter
     // - orderBy=startTime: Sort events chronologically by their start time
     // - singleEvents=true: Expand recurring events into individual instances
-    const apiURL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true`;
-
-    // ========================================
+    
     console.log(apiURL);
 
     // FETCH EVENTS FROM GOOGLE CALENDAR

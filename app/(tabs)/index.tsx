@@ -233,8 +233,8 @@ export default function Index() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.contributorsRow}
           >
-            {/* Placeholder contributors - replace names when available */}
-            {['JD', 'MC', 'AR', 'LS', 'KP', 'TR', 'MG', 'DS', 'CH', 'NR'].map((initials, index) => (
+            {/* Aleida Holguin, Sabina Sosa, Brian Casio, Benjamin Gurovich, Diego Reyes Bretado, Namoi Ortega Armenda Aden Ramierez*/}
+            {['AH', 'SS', 'BC', 'BG', 'DRB', 'NOA', 'AR'].map((initials, index) => (
               <View key={index} style={styles.contributorAvatar}>
                 <Text style={styles.contributorInitials}>{initials}</Text>
               </View>
