@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SHPE MAES",
+    "name": "SHPEMAES",
     "slug": "appdev",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,23 +9,31 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "org.utepshpemaes.shpemaes"
+      "supportsTablet": false,
+      "bundleIdentifier": "org.utepshpemaes.shpemaes",
+      "buildNumber": "3",
+      "icon": "./assets/images/SHPEMaes.png",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "package": "com.shpemaesutep.app",
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/SHPEMaes.png",
         "backgroundColor": "#f6f6de",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "monochromeImage": "./assets/images/andriod-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/shpemaeslogo.png"
     },
     "plugins": [
       "expo-router",
@@ -41,7 +49,15 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/SHPEMaes.png",
+          "color": "#ffffff"
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

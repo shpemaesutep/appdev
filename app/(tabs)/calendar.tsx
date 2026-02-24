@@ -108,7 +108,7 @@ export default function Calendar() {
     // ========================================
     // This is the new version that fetches real-time events from Google Calendar
     // Comment out this entire section and uncomment the old implementation above to revert
-    
+
     // ========================================
     // GOOGLE CALENDAR API CONFIGURATION
     // ========================================
@@ -117,18 +117,18 @@ export default function Calendar() {
     // and restricting this API key in Google Cloud Console to prevent unauthorized use
     // This is the API key for the real Google Calendar API
     //const API_KEY = "AIzaSyDe3pSzYXT0tMWFrl3q40lWur1Lls-MEZQ"; 
-    
+
     // This is the API key for the Google Calendar API
-    const API_KEY = "AIzaSyBIx6nTl2niOG6yD17L-jua2X-u-j2mFBU";
+    
 
 
     // Calendar ID: Unique identifier for the specific Google Calendar we want to fetch events from
     // This is typically found in the calendar settings under "Integrate calendar"
     // This is the Calendar ID for the real Google Calendar
     //const CALENDAR_ID = "shpemaesutep@gmail.com";
-    
+
     // This is the Calendar ID for the mock Google Calendar
-    
+
     // ========================================
     // BUILD API REQUEST URL
     // ========================================
@@ -137,143 +137,143 @@ export default function Calendar() {
     // - key=${API_KEY}: Authentication parameter
     // - orderBy=startTime: Sort events chronologically by their start time
     // - singleEvents=true: Expand recurring events into individual instances
-    
+    const apiURL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true`;
     console.log(apiURL);
 
     // FETCH EVENTS FROM GOOGLE CALENDAR
     // ========================================
     fetch(apiURL)
-    .then((response)=> response.json())
-    .then((json) => {
-      // ========================================
-      // ERROR HANDLING
-      // ========================================
-      // Check if the API returned an error (e.g., invalid API key, calendar not found, permission denied)
-      if (json.error) {
-        console.error("Google Calendar API Error:", json.error);
-        // AFTER: Set user-friendly error message instead of just logging
-        setError(json.error.message || "Failed to load events from Google Calendar");
-        setLoading(false);
-        return;
-      }
-
-      // ========================================
-      // EXTRACT EVENTS FROM RESPONSE
-      // ========================================
-      // The Google Calendar API returns events in a 'items' array
-      // If no events exist, default to an empty array to prevent errors
-      const items = json.items || [];
-
-      // ========================================
-      // TRANSFORM GOOGLE CALENDAR DATA
-      // ========================================
-      // Map each Google Calendar event to our app's EventItem structure
-      // This ensures compatibility with our existing UI components
-      // NOTE: The old JSON implementation didn't need this transformation because the data was already in the correct format
-      const mappedData = items.map((item: any) => {
-        // AFTER: Added null check for item.start to prevent crashes on malformed data
-        if (!item.start) {
-          console.warn("Event missing start time:", item);
-          return null;
+      .then((response) => response.json())
+      .then((json) => {
+        // ========================================
+        // ERROR HANDLING
+        // ========================================
+        // Check if the API returned an error (e.g., invalid API key, calendar not found, permission denied)
+        if (json.error) {
+          console.error("Google Calendar API Error:", json.error);
+          // AFTER: Set user-friendly error message instead of just logging
+          setError(json.error.message || "Failed to load events from Google Calendar");
+          setLoading(false);
+          return;
         }
 
-        // Extract the start time/date from the event
-        // dateTime: Used for events with specific times (e.g., "2025-12-15T14:00:00-07:00")
-        // date: Used for all-day events (e.g., "2025-12-15")
-        const start = item.start.dateTime || item.start.date;
-        const end = item.end?.dateTime || item.end?.date;
-        
-        // Convert the ISO 8601 date string to a JavaScript Date object
-        // This allows us to format the time according to our needs
-        const dateObj = new Date(start);
-        const endDateObj = end ? new Date(end) : null;
-        
-        // Check if we have a real end time (different from start)
-        const hasRealEndTime = endDateObj && endDateObj.getTime() !== dateObj.getTime();
-        
-        // For past events logic: if no end time, assume 1 hour after start
-        const endTimestampForFiltering = hasRealEndTime 
-          ? endDateObj.getTime() 
-          : dateObj.getTime() + (60 * 60 * 1000); // 1 hour in milliseconds
-        
         // ========================================
-        // FORMAT TIME STRINGS
+        // EXTRACT EVENTS FROM RESPONSE
         // ========================================
-        // Check if this is an all-day event (only has 'date', no 'dateTime')
-        // - All-day events: Display "All Day" for start, empty for end
-        // - Timed events: Show end time only if explicitly provided
-        const isAllDay = !!item.start.date;
-        const startTimeStr = isAllDay 
-          ? "All Day" 
-          : dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-        // Only show end time if it's a real end time (not same as start, not assumed)
-        const endTimeStr = isAllDay || !hasRealEndTime
-          ? "" 
-          : endDateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
-        // BEFORE: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-        // This produced "Thu, Jan 23" which was cramped
-        // AFTER: Shortened format without weekday for cleaner display
-        const dateString = dateObj.toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric' 
-        });
+        // The Google Calendar API returns events in a 'items' array
+        // If no events exist, default to an empty array to prevent errors
+        const items = json.items || [];
 
         // ========================================
-        // CREATE EVENT ITEM OBJECT
+        // TRANSFORM GOOGLE CALENDAR DATA
         // ========================================
-        // Map Google Calendar fields to our EventItem type:
-        // OLD JSON had: id, title, time, location, description (already in correct format)
-        // NEW API uses: id, summary, start.dateTime/date, location, description (needs transformation)
-        
-        // AFTER: Generate monthKey for grouping (e.g., "January 2026")
-        const monthKey = dateObj.toLocaleDateString('en-US', { 
-          month: 'long', 
-          year: 'numeric' 
-        });
-        
-        return {
-          id: item.id,                              // Unique event identifier from Google Calendar
-          title: item.summary || "No Title",        // Event name (summary in Google Calendar API) - was "title" in old JSON
-          startTime: startTimeStr,                  // Start time or "All Day"
-          endTime: endTimeStr,                      // End time (empty for all-day events)
-          date: dateString,                         // AFTER: Added formatted date string
-          // BEFORE: location: item.location || "TBD"
-          // AFTER: Log location for debugging, check if API returns it
-          location: item.location || "TBD",         // Event location (defaults to "TBD" if not specified)
-          // BEFORE: description: item.description || ""
-          // AFTER: Strip HTML from description for clean text display
-          description: stripHtml(item.description || ""),
-          // AFTER: Store raw timestamp for filtering/sorting by date
-          startTimestamp: dateObj.getTime(),
-          // AFTER: Store end timestamp for determining when event is truly over
-          // Uses assumed 1 hour duration if no end time provided
-          endTimestamp: endTimestampForFiltering,
-          // AFTER: Store monthKey for grouping
-          monthKey: monthKey,
-        };
-      }).filter(Boolean); // AFTER: Filter out null entries from malformed data
+        // Map each Google Calendar event to our app's EventItem structure
+        // This ensures compatibility with our existing UI components
+        // NOTE: The old JSON implementation didn't need this transformation because the data was already in the correct format
+        const mappedData = items.map((item: any) => {
+          // AFTER: Added null check for item.start to prevent crashes on malformed data
+          if (!item.start) {
+            console.warn("Event missing start time:", item);
+            return null;
+          }
 
-      // ========================================
-      // UPDATE STATE WITH FETCHED DATA
-      // ========================================
-      setData(mappedData);    // Store the transformed events in state
-      setLoading(false);      // Hide the loading indicator
-      // AFTER: Reset refreshing state after fetch completes
-      setRefreshing(false);
-    })
-    .catch((err) => {
-      // ========================================
-      // NETWORK ERROR HANDLING
-      // ========================================
-      // Catch any network errors (e.g., no internet connection, API endpoint unreachable)
-      console.error("Error fetching events:", err);
-      // AFTER: Set user-friendly error message for network failures
-      setError("Unable to connect. Please check your internet connection and try again.");
-      setLoading(false);
-      // AFTER: Reset refreshing state on error
-      setRefreshing(false);
-    });
+          // Extract the start time/date from the event
+          // dateTime: Used for events with specific times (e.g., "2025-12-15T14:00:00-07:00")
+          // date: Used for all-day events (e.g., "2025-12-15")
+          const start = item.start.dateTime || item.start.date;
+          const end = item.end?.dateTime || item.end?.date;
+
+          // Convert the ISO 8601 date string to a JavaScript Date object
+          // This allows us to format the time according to our needs
+          const dateObj = new Date(start);
+          const endDateObj = end ? new Date(end) : null;
+
+          // Check if we have a real end time (different from start)
+          const hasRealEndTime = endDateObj && endDateObj.getTime() !== dateObj.getTime();
+
+          // For past events logic: if no end time, assume 1 hour after start
+          const endTimestampForFiltering = hasRealEndTime
+            ? endDateObj.getTime()
+            : dateObj.getTime() + (60 * 60 * 1000); // 1 hour in milliseconds
+
+          // ========================================
+          // FORMAT TIME STRINGS
+          // ========================================
+          // Check if this is an all-day event (only has 'date', no 'dateTime')
+          // - All-day events: Display "All Day" for start, empty for end
+          // - Timed events: Show end time only if explicitly provided
+          const isAllDay = !!item.start.date;
+          const startTimeStr = isAllDay
+            ? "All Day"
+            : dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          // Only show end time if it's a real end time (not same as start, not assumed)
+          const endTimeStr = isAllDay || !hasRealEndTime
+            ? ""
+            : endDateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+          // BEFORE: dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+          // This produced "Thu, Jan 23" which was cramped
+          // AFTER: Shortened format without weekday for cleaner display
+          const dateString = dateObj.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          });
+
+          // ========================================
+          // CREATE EVENT ITEM OBJECT
+          // ========================================
+          // Map Google Calendar fields to our EventItem type:
+          // OLD JSON had: id, title, time, location, description (already in correct format)
+          // NEW API uses: id, summary, start.dateTime/date, location, description (needs transformation)
+
+          // AFTER: Generate monthKey for grouping (e.g., "January 2026")
+          const monthKey = dateObj.toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric'
+          });
+
+          return {
+            id: item.id,                              // Unique event identifier from Google Calendar
+            title: item.summary || "No Title",        // Event name (summary in Google Calendar API) - was "title" in old JSON
+            startTime: startTimeStr,                  // Start time or "All Day"
+            endTime: endTimeStr,                      // End time (empty for all-day events)
+            date: dateString,                         // AFTER: Added formatted date string
+            // BEFORE: location: item.location || "TBD"
+            // AFTER: Log location for debugging, check if API returns it
+            location: item.location || "TBD",         // Event location (defaults to "TBD" if not specified)
+            // BEFORE: description: item.description || ""
+            // AFTER: Strip HTML from description for clean text display
+            description: stripHtml(item.description || ""),
+            // AFTER: Store raw timestamp for filtering/sorting by date
+            startTimestamp: dateObj.getTime(),
+            // AFTER: Store end timestamp for determining when event is truly over
+            // Uses assumed 1 hour duration if no end time provided
+            endTimestamp: endTimestampForFiltering,
+            // AFTER: Store monthKey for grouping
+            monthKey: monthKey,
+          };
+        }).filter(Boolean); // AFTER: Filter out null entries from malformed data
+
+        // ========================================
+        // UPDATE STATE WITH FETCHED DATA
+        // ========================================
+        setData(mappedData);    // Store the transformed events in state
+        setLoading(false);      // Hide the loading indicator
+        // AFTER: Reset refreshing state after fetch completes
+        setRefreshing(false);
+      })
+      .catch((err) => {
+        // ========================================
+        // NETWORK ERROR HANDLING
+        // ========================================
+        // Catch any network errors (e.g., no internet connection, API endpoint unreachable)
+        console.error("Error fetching events:", err);
+        // AFTER: Set user-friendly error message for network failures
+        setError("Unable to connect. Please check your internet connection and try again.");
+        setLoading(false);
+        // AFTER: Reset refreshing state on error
+        setRefreshing(false);
+      });
     // ========================================
     // END OF NEW IMPLEMENTATION
     // ========================================
@@ -292,7 +292,7 @@ export default function Calendar() {
     const timer = setInterval(() => {
       setCurrentTime(Date.now());
     }, 60000); // Update every 60 seconds
-    
+
     return () => clearInterval(timer); // Cleanup on unmount
   }, []);
 
@@ -312,33 +312,33 @@ export default function Calendar() {
   // Events are now considered "past" only after their END time, not start time
   // Uses currentTime state (updated every minute) instead of Date.now() for real-time updates
   const now = currentTime;
-  
+
   // Separate upcoming and past events (using endTimestamp for past event cutoff)
   const upcomingEvents = data
     .filter(event => event.endTimestamp >= now)
     .sort((a, b) => a.startTimestamp - b.startTimestamp); // Soonest first
-  
+
   const pastEvents = data
     .filter(event => event.endTimestamp < now)
     .sort((a, b) => b.startTimestamp - a.startTimestamp); // Most recent first
-  
+
   // BEFORE: Flat array combination
   // const displayedEvents = showPastEvents 
   //   ? [...upcomingEvents, ...pastEvents]
   //   : upcomingEvents;
-  
+
   // AFTER: Group events by month for SectionList
   // Helper function to group events by monthKey
   const groupByMonth = (events: EventItem[]): EventSection[] => {
     const grouped: { [key: string]: EventItem[] } = {};
-    
+
     events.forEach(event => {
       if (!grouped[event.monthKey]) {
         grouped[event.monthKey] = [];
       }
       grouped[event.monthKey].push(event);
     });
-    
+
     // Convert to sections array, preserving month order from sorted events
     const monthOrder: string[] = [];
     events.forEach(event => {
@@ -346,25 +346,25 @@ export default function Calendar() {
         monthOrder.push(event.monthKey);
       }
     });
-    
+
     return monthOrder.map(month => ({
       title: month,
       data: grouped[month],
     }));
   };
-  
+
   // Create sections for upcoming events
   const upcomingSections = groupByMonth(upcomingEvents);
-  
+
   // Create sections for past events (if enabled)
   const pastSections = showPastEvents && pastEvents.length > 0
     ? [
-        // Add "Past Events" divider section (empty data, just a header)
-        { title: '___PAST_DIVIDER___', data: [] as EventItem[], isPastDivider: true },
-        ...groupByMonth(pastEvents)
-      ]
+      // Add "Past Events" divider section (empty data, just a header)
+      { title: '___PAST_DIVIDER___', data: [] as EventItem[], isPastDivider: true },
+      ...groupByMonth(pastEvents)
+    ]
     : [];
-  
+
   // Combine all sections
   const sections: EventSection[] = [...upcomingSections, ...pastSections];
 
@@ -373,8 +373,8 @@ export default function Calendar() {
   // ========================================
   // BEFORE: Loading view was not centered or styled
   // AFTER: Proper centered loading state with consistent styling
-  if(isLoading) {
-    return(
+  if (isLoading) {
+    return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#D25100" />
@@ -389,8 +389,8 @@ export default function Calendar() {
   // ========================================
   // AFTER: Added error state UI - shows when API call fails
   // Includes retry button so users can attempt to reload without restarting app
-  if(error) {
-    return(
+  if (error) {
+    return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
           <Ionicons name="cloud-offline-outline" size={64} color="#D25100" />
@@ -412,27 +412,27 @@ export default function Calendar() {
   // BEFORE: if(displayedEvents.length === 0) - checked flat array
   // AFTER: Check sections array for grouped empty state
   // Also added context-aware messages based on whether showing past events
-  if(upcomingEvents.length === 0 && (!showPastEvents || pastEvents.length === 0)) {
-    return(
+  if (upcomingEvents.length === 0 && (!showPastEvents || pastEvents.length === 0)) {
+    return (
       <SafeAreaView style={styles.container}>
         {/* BEFORE: <Text style={styles.header}>SHPE Conference 2026</Text> */}
         {/* AFTER: Replaced text with logo image as requested */}
         <View style={styles.headerContainer}>
-            <Image 
-                source={require('../../assets/images/shpemaeslogo.png')} 
-                style={styles.headerLogo}
-                resizeMode="contain"
-            />
+          <Image
+            source={require('../../assets/images/shpemaeslogo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
         {/* AFTER: Added toggle button even on empty state for consistency */}
-        <TouchableOpacity 
-          style={styles.toggleButton} 
+        <TouchableOpacity
+          style={styles.toggleButton}
           onPress={() => setShowPastEvents(!showPastEvents)}
         >
-          <Ionicons 
-            name={showPastEvents ? "eye" : "eye-off-outline"} 
-            size={18} 
-            color="#666" 
+          <Ionicons
+            name={showPastEvents ? "eye" : "eye-off-outline"}
+            size={18}
+            color="#666"
           />
           <Text style={styles.toggleButtonText}>
             {showPastEvents ? "Hide Past Events" : "Show Past Events"}
@@ -443,13 +443,13 @@ export default function Calendar() {
           {/* BEFORE: Generic "No Events Scheduled" message */}
           {/* AFTER: Context-aware messages based on filter state */}
           <Text style={styles.emptyTitle}>
-            {showPastEvents 
-              ? "No Events Found" 
+            {showPastEvents
+              ? "No Events Found"
               : "No Upcoming Events"}
           </Text>
           <Text style={styles.emptyMessage}>
-            {showPastEvents 
-              ? "There are no events in the calendar." 
+            {showPastEvents
+              ? "There are no events in the calendar."
               : "Check back later for upcoming events!"}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => fetchEvents()}>
@@ -466,21 +466,21 @@ export default function Calendar() {
       {/* BEFORE: <Text style={styles.header}>SHPE Conference 2026</Text> */}
       {/* AFTER: Replaced text with logo image as requested */}
       <View style={styles.headerContainer}>
-        <Image 
-            source={require('../../assets/images/shpemaeslogo.png')} 
-            style={styles.headerLogo}
-            resizeMode="contain"
+        <Image
+          source={require('../../assets/images/shpemaeslogo.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
         />
       </View>
       {/* AFTER: Added "Show Past Events" toggle button */}
-      <TouchableOpacity 
-        style={styles.toggleButton} 
+      <TouchableOpacity
+        style={styles.toggleButton}
         onPress={() => setShowPastEvents(!showPastEvents)}
       >
-        <Ionicons 
-          name={showPastEvents ? "eye" : "eye-off-outline"} 
-          size={18} 
-          color="#666" 
+        <Ionicons
+          name={showPastEvents ? "eye" : "eye-off-outline"}
+          size={18}
+          color="#666"
         />
         <Text style={styles.toggleButtonText}>
           {showPastEvents ? "Hide Past Events" : "Show Past Events"}
@@ -527,7 +527,7 @@ export default function Calendar() {
         renderItem={({ item }: { item: EventItem }) => (
           // BEFORE: style={styles.card}onPress - missing space
           // AFTER: Added space between style and onPress
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.card}
             // AFTER: Added activeOpacity for better touch feedback
             activeOpacity={0.7}
@@ -543,7 +543,8 @@ export default function Calendar() {
                   // AFTER: Also passing date for complete event info
                   date: item.date,
                   location: item.location,
-                  description: item.description
+                  description: item.description,
+                  startTimestamp: item.startTimestamp,
                 }
               })
             }}
@@ -572,12 +573,12 @@ export default function Calendar() {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F5F5F5', padding: 10},
+  container: { flex: 1, backgroundColor: '#F5F5F5', padding: 10 },
   // BEFORE: loadingContainer was defined but never used properly
   // AFTER: Renamed to centerContainer and used for loading, error, and empty states
-  centerContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   // BEFORE: header: {fontSize: 24, fontWeight: 'bold', color: '#002649', marginBottom: 15},
@@ -592,40 +593,53 @@ const styles = StyleSheet.create({
     width: Math.min(SCREEN_WIDTH * 0.55, 220),   // 55% of screen width, max 220
     height: Math.min(SCREEN_WIDTH * 0.18, 70),   // Proportional height
   },
-  card: {backgroundColor: 'white', padding: 15, borderRadius: 10, marginBottom: 10, shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2},
-    shadowOpacity: 0.1, elevation: 3
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 16,
+    shadowColor: '#002649',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
   },
-  row: { flexDirection: 'row', alignItems: 'center'},
+  row: { flexDirection: 'row', alignItems: 'center' },
   // BEFORE: timeContainer minWidth: 75, maxWidth: 90 - too cramped for date format
   // AFTER: Adjusted for cleaner time-first layout
-  timeContainer: { 
-    minWidth: 75,
-    marginRight: 14,
+  // AFTER: Adjusted for cleaner time-first layout
+  timeContainer: {
+    minWidth: 80,
+    marginRight: 16,
+    paddingRight: 16,
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
     alignItems: 'flex-start',
   },
   // Start time - primary, bold, orange
-  startTime: { 
-    fontWeight: '600', 
+  startTime: {
+    fontWeight: '800',
     color: '#D25100',
-    fontSize: 14,
+    fontSize: 15,
   },
   // End time - smaller with "to" prefix
-  endTime: { 
+  endTime: {
     color: '#D25100',
     fontSize: 10,
     marginTop: 2,
     opacity: 0.85,
   },
   // Date below times, muted for visual hierarchy
-  date: { 
-    color: '#666', 
+  date: {
+    color: '#666',
     fontSize: 11,
     marginTop: 4,
   },
-  info: {flex: 1},
-  title: {fontWeight: 'bold', fontSize: 16, color: '#333'},
-  location: {color: 'gray', fontSize: 12, marginTop: 4},
+  info: { flex: 1, justifyContent: 'center' },
+  title: { fontWeight: '700', fontSize: 17, color: '#002649', marginBottom: 4 },
+  location: { color: '#666', fontSize: 13, marginTop: 4 },
   // AFTER: Added listContent style for FlatList padding (home indicator clearance)
   listContent: {
     paddingBottom: 20,
@@ -696,15 +710,16 @@ const styles = StyleSheet.create({
   },
   // AFTER: Added styles for month section headers
   sectionHeader: {
-    backgroundColor: '#F5F5F5',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    marginTop: 5,
+    paddingVertical: 12,
+    marginBottom: 8,
+    backgroundColor: 'transparent',
   },
   sectionHeaderText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#002649',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   // AFTER: Added styles for "Past Events" divider
   pastEventsDivider: {

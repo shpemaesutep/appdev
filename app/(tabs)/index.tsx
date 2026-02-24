@@ -2,7 +2,7 @@
 // AFTER: Added Image for logo display, Dimensions for responsive sizing
 import { Animated, Dimensions, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { styles } from "../styles/index.styles";
+import { styles } from "../../styles/index.styles";
 
 // Import FontAwesome icons from Expo vector icons library
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';

@@ -10,11 +10,18 @@ export const styles = StyleSheet.create({
   // Header section containing logo and org name
   headerSection: {
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical: 40,
     paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.06)",
+    borderBottomColor: "rgba(0,0,0,0.04)",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerAccentBar: {
     height: 6,
@@ -58,44 +65,50 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginHorizontal: 15,
     marginTop: 15,
-    padding: 20,
-    borderRadius: 12,
+    padding: 24,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 3,
   },
 
   // Text section without container (for Mission/Vision)
   textSection: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 15,
     marginTop: 15,
-    padding: 20,
-    borderRadius: 15,
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: '#002649',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
   },
 
   // Section header with icon and title
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
 
   // Section title text
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#002649',
-    marginLeft: 10,
+    marginLeft: 12,
   },
 
   // Body text for mission/vision
   bodyText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#444',
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#555',
+    fontWeight: '400',
   },
 
   // "Our 6 Pillars" header container
@@ -107,24 +120,27 @@ export const styles = StyleSheet.create({
 
   // "Our 6 Pillars" header
   pillarsHeader: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#002649',
     textAlign: 'center',
+    marginBottom: 5,
   },
 
   // Individual pillar section (white card container)
   pillarSection: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 15,
     marginTop: 15,
-    padding: 15,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 20,
+    borderRadius: 20,
+    shadowColor: '#002649',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
   },
 
   // Individual pillar card content
@@ -135,12 +151,17 @@ export const styles = StyleSheet.create({
 
   // Icon container with colored background
   iconContainer: {
-    width: 58,
-    height: 58,
-    borderRadius: 18, // rounded-square is “modern”
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 14,
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
 
@@ -151,17 +172,17 @@ export const styles = StyleSheet.create({
 
   // Pillar title
   pillarTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#002649',
-    marginBottom: 4,
+    marginBottom: 6,
   },
 
   // Pillar description
   pillarDescription: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
   },
   // Social media icons container
   socialContainer: {
@@ -180,18 +201,18 @@ export const styles = StyleSheet.create({
     height: 20,
   },
   socialButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    marginHorizontal: 10,
+    shadowColor: "#002649",
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 10,
+    elevation: 3,
   },
   socialPressed: {
     opacity: 0.75,
