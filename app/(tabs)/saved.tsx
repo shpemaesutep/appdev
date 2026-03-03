@@ -79,6 +79,9 @@ export default function Saved() {
             const items = json.items || [];
 
             // 3. Filter and parse the API data to ONLY include the user's saved events
+            const expiredEventIds: string[] = [];
+            const now = new Date().getTime();
+
             const mappedData = items
                 .filter((item: any) => savedEventIds.includes(item.id))
                 .map((item: any) => {
@@ -91,6 +94,21 @@ export default function Saved() {
                     const hasRealEndTime = endDateObj && endDateObj.getTime() !== dateObj.getTime();
 
                     const isAllDay = !!item.start.date;
+
+                    // Calculate end time to check if event has passed
+                    let endTimeMs = 0;
+                    if (isAllDay) {
+                        endTimeMs = dateObj.getTime() + 24 * 60 * 60 * 1000;
+                    } else if (endDateObj) {
+                        endTimeMs = endDateObj.getTime();
+                    } else {
+                        endTimeMs = dateObj.getTime() + 60 * 60 * 1000;
+                    }
+
+                    if (endTimeMs < now) {
+                        expiredEventIds.push(item.id);
+                        return null;
+                    }
                     const startTimeStr = isAllDay
                         ? "All Day"
                         : dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -127,6 +145,18 @@ export default function Saved() {
                         monthKey: monthKey,
                     };
                 }).filter(Boolean);
+
+            // 4. Remove expired events from AsyncStorage
+            for (const expiredId of expiredEventIds) {
+                const storageKey = `reminder_${expiredId}`;
+                const reminderId = newMapping[expiredId];
+                if (reminderId) {
+                    await cancelEventReminder(reminderId);
+                }
+                await AsyncStorage.removeItem(storageKey);
+                delete newMapping[expiredId];
+            }
+            setReminderKeyMapping(newMapping);
 
             setSavedEvents(mappedData);
         } catch (err) {
@@ -343,18 +373,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     card: {
-  backgroundColor: '#F1F6FA',
-  padding: 20,
-  borderRadius: 20,
-  marginBottom: 16,
-  shadowColor: '#002649',
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  elevation: 3,
-  borderWidth: 1,
-  borderColor: '#DCE7F0',
-},
+        backgroundColor: '#F1F6FA',
+        padding: 20,
+        borderRadius: 20,
+        marginBottom: 16,
+        shadowColor: '#002649',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: '#DCE7F0',
+    },
     row: { flexDirection: 'row', alignItems: 'center' },
     timeContainer: {
         minWidth: 80,

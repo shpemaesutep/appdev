@@ -119,14 +119,13 @@ export default function Calendar() {
     //const API_KEY = "AIzaSyDe3pSzYXT0tMWFrl3q40lWur1Lls-MEZQ"; 
 
     // This is the API key for the Google Calendar API
-    
-
+    const API_KEY = process.env.EXPO_PUBLIC_CALENDAR_API_KEY;
 
     // Calendar ID: Unique identifier for the specific Google Calendar we want to fetch events from
     // This is typically found in the calendar settings under "Integrate calendar"
     // This is the Calendar ID for the real Google Calendar
     //const CALENDAR_ID = "shpemaesutep@gmail.com";
-
+    const CALENDAR_ID = process.env.EXPO_PUBLIC_CALENDAR_ID;
     // This is the Calendar ID for the mock Google Calendar
 
     // ========================================
@@ -137,7 +136,7 @@ export default function Calendar() {
     // - key=${API_KEY}: Authentication parameter
     // - orderBy=startTime: Sort events chronologically by their start time
     // - singleEvents=true: Expand recurring events into individual instances
-    const apiURL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true`;
+    const apiURL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID || '')}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true`;
     console.log(apiURL);
 
     // FETCH EVENTS FROM GOOGLE CALENDAR
@@ -419,7 +418,7 @@ export default function Calendar() {
         {/* AFTER: Replaced text with logo image as requested */}
         <View style={styles.headerContainer}>
           <Image
-            source={require('../../assets/images/shpemaeslogo.png')}
+            source={require('../../assets/images/SHPEMaes.png')}
             style={styles.headerLogo}
             resizeMode="contain"
           />

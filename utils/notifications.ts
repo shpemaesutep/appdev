@@ -16,7 +16,7 @@ if (Platform.OS !== 'web') {
       shouldShowBanner: true,
       shouldShowList: true,
     }),
-  });
+  }); 
 }
 
 /**

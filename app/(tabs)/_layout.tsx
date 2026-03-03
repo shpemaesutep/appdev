@@ -44,6 +44,16 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen
+        name="FlappyMascot"
+        options={{
+          title: 'Game',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="game-controller" color={color} size={size} />
+          ),
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
         name="details"
         options={{
           href: null,
