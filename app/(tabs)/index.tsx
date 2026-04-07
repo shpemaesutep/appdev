@@ -234,7 +234,7 @@ export default function Index() {
             contentContainerStyle={styles.contributorsRow}
           >
             {/* Aleida Holguin, Sabina Sosa, Brian Casio, Benjamin Gurovich, Diego Reyes Bretado, Namoi Ortega Armenda Aden Ramierez*/}
-            {['AH', 'SS', 'BC', 'BG', 'DRB', 'NOA', 'AR'].map((initials, index) => (
+            {['AH', 'SS', 'BC','LJ', 'BG', 'DRB', 'NOA', 'AR'].map((initials, index) => (
               <View key={index} style={styles.contributorAvatar}>
                 <Text style={styles.contributorInitials}>{initials}</Text>
               </View>

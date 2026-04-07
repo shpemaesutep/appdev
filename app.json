@@ -2,7 +2,7 @@
   "expo": {
     "name": "SHPE MAES",
     "slug": "appdev",
-    "version": "1.0.0",
+    "version": "1.0.0", // increment this every build
     "orientation": "portrait",
     "icon": "./assets/images/SHPEMaes.png",
     "scheme": "utepshpemaes",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "org.utepshpemaes.shpemaes",
-      "buildNumber": "6",
+      "buildNumber": "6", // increment every submission
       "icon": "./assets/images/SHPEMaes.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -22,7 +22,7 @@
     },
     "android": {
       "package": "com.shpemaesutep.app",
-      "versionCode": 4,
+      "versionCode": 4,// increment every submission
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/SHPEMaes.png",
         "backgroundColor": "#f6f6de",
