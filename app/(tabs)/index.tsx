@@ -123,7 +123,7 @@ export default function Index() {
             <Text style={styles.sectionTitle}>Our Mission</Text>
           </View>
           <Text style={styles.bodyText}>Engage UTEP and El Paso students through academic,
-            leadeership, professional, and service opportunities in support of their growth opportunities
+            leadership, professional, and service opportunities in support of their growth opportunities
             in support of their growth as STEM professionals.
           </Text>
         </View>
@@ -234,7 +234,7 @@ export default function Index() {
             contentContainerStyle={styles.contributorsRow}
           >
             {/* Aleida Holguin, Sabina Sosa, Brian Casio, Benjamin Gurovich, Diego Reyes Bretado, Namoi Ortega Armenda Aden Ramierez*/}
-            {['AH', 'SS', 'BC','LJ', 'BG', 'DRB', 'NOA', 'AR'].map((initials, index) => (
+            {['DSH', 'AH', 'SS', 'BC', 'BG', 'DRB', 'NOA', 'AR', 'LJ'].map((initials, index) => (
               <View key={index} style={styles.contributorAvatar}>
                 <Text style={styles.contributorInitials}>{initials}</Text>
               </View>

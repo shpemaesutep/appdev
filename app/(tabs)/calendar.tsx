@@ -8,6 +8,7 @@ import { ActivityIndicator, Dimensions, Image, RefreshControl, SectionList, Styl
 import { SafeAreaView } from "react-native-safe-area-context";
 // AFTER: Added Ionicons import for retry and empty state icons
 import { Ionicons } from '@expo/vector-icons';
+import { buildGoogleCalendarEventsUrl, parseGoogleCalendarDate } from "../../utils/googleCalendar";
 
 // AFTER: Get screen dimensions for responsive sizing
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -110,34 +111,15 @@ export default function Calendar() {
     // Comment out this entire section and uncomment the old implementation above to revert
 
     // ========================================
-    // GOOGLE CALENDAR API CONFIGURATION
-    // ========================================
-    // API Key: Used to authenticate requests to Google Calendar API
-    // IMPORTANT: For production apps, consider using environment variables
-    // and restricting this API key in Google Cloud Console to prevent unauthorized use
-    // This is the API key for the real Google Calendar API
-    //const API_KEY = "AIzaSyDe3pSzYXT0tMWFrl3q40lWur1Lls-MEZQ"; 
-
-    // This is the API key for the Google Calendar API
-    const API_KEY = process.env.EXPO_PUBLIC_CALENDAR_API_KEY;
-
-    // Calendar ID: Unique identifier for the specific Google Calendar we want to fetch events from
-    // This is typically found in the calendar settings under "Integrate calendar"
-    // This is the Calendar ID for the real Google Calendar
-    //const CALENDAR_ID = "shpemaesutep@gmail.com";
-    const CALENDAR_ID = process.env.EXPO_PUBLIC_CALENDAR_ID;
-    // This is the Calendar ID for the mock Google Calendar
-
-    // ========================================
     // BUILD API REQUEST URL
     // ========================================
-    // Construct the Google Calendar API endpoint with query parameters:
-    // - encodeURIComponent(CALENDAR_ID): Safely encode the calendar ID for use in URL
-    // - key=${API_KEY}: Authentication parameter
-    // - orderBy=startTime: Sort events chronologically by their start time
-    // - singleEvents=true: Expand recurring events into individual instances
-    const apiURL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID || '')}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true`;
-    console.log(apiURL);
+    const apiURL = buildGoogleCalendarEventsUrl();
+    if (!apiURL) {
+      setError("Google Calendar is not configured for this build.");
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
 
     // FETCH EVENTS FROM GOOGLE CALENDAR
     // ========================================
@@ -184,8 +166,12 @@ export default function Calendar() {
 
           // Convert the ISO 8601 date string to a JavaScript Date object
           // This allows us to format the time according to our needs
-          const dateObj = new Date(start);
-          const endDateObj = end ? new Date(end) : null;
+          const dateObj = parseGoogleCalendarDate(start);
+          const endDateObj = parseGoogleCalendarDate(end);
+          if (!dateObj) {
+            console.warn("Event has invalid start date:", item);
+            return null;
+          }
 
           // Check if we have a real end time (different from start)
           const hasRealEndTime = endDateObj && endDateObj.getTime() !== dateObj.getTime();

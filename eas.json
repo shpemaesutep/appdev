@@ -3,7 +3,11 @@
     "appVersionSource": "local"
   },
   "build": {
+    "preview": {
+      "distribution": "internal"
+    },
     "production": {
+      "ios": {},
       "android": {
         "buildType": "app-bundle"
       }

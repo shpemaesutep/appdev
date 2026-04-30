@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { cancelEventReminder } from '../../utils/notifications';
+import { buildGoogleCalendarEventsUrl, parseGoogleCalendarDate } from '../../utils/googleCalendar';
 
 type EventItem = {
     id: string;
@@ -29,9 +30,6 @@ export default function Saved() {
     const [savedEvents, setSavedEvents] = useState<EventItem[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [reminderKeyMapping, setReminderKeyMapping] = useState<{ [eventId: string]: string }>({});
-
-    const API_KEY = "AIzaSyBIx6nTl2niOG6yD17L-jua2X-u-j2mFBU";
-    const CALENDAR_ID = "5e9e02620498aabb88e980ffffc9e742bc348d9556cd358f836f75398a4d9f35@group.calendar.google.com";
 
     const fetchSavedEvents = async (isRefresh = false) => {
         if (!isRefresh) setLoading(true);
@@ -65,7 +63,13 @@ export default function Saved() {
             setReminderKeyMapping(newMapping);
 
             // 2. Fetch all events from Google Calendar
-            const apiURL = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${API_KEY}&orderBy=startTime&singleEvents=true`;
+            const apiURL = buildGoogleCalendarEventsUrl();
+            if (!apiURL) {
+                setError("Google Calendar is not configured for this build.");
+                setLoading(false);
+                setRefreshing(false);
+                return;
+            }
             const response = await fetch(apiURL);
             const json = await response.json();
 
@@ -89,8 +93,9 @@ export default function Saved() {
 
                     const start = item.start.dateTime || item.start.date;
                     const end = item.end?.dateTime || item.end?.date;
-                    const dateObj = new Date(start);
-                    const endDateObj = end ? new Date(end) : null;
+                    const dateObj = parseGoogleCalendarDate(start);
+                    const endDateObj = parseGoogleCalendarDate(end);
+                    if (!dateObj) return null;
                     const hasRealEndTime = endDateObj && endDateObj.getTime() !== dateObj.getTime();
 
                     const isAllDay = !!item.start.date;
@@ -283,7 +288,7 @@ export default function Saved() {
                     <Ionicons name="bookmark-outline" size={80} color="#999" />
                     <Text style={styles.emptyTitle}>No Saved Events</Text>
                     <Text style={styles.emptyMessage}>
-                        You haven't requested any reminders for upcoming events yet. Tap the bell icon on an event to save it here!
+                        You haven&apos;t requested any reminders for upcoming events yet. Tap the bell icon on an event to save it here!
                     </Text>
                 </View>
             </SafeAreaView>
