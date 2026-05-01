@@ -60,6 +60,47 @@ export const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  carouselSection: {
+    marginHorizontal: 15,
+    marginTop: 15,
+    overflow: "hidden",
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#002649",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+
+  carouselImage: {
+    width: "100%",
+    height: 210,
+  },
+
+  carouselDots: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  carouselDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.65)",
+    marginHorizontal: 4,
+  },
+
+  carouselDotActive: {
+    width: 22,
+    backgroundColor: "#FF8200",
+  },
+
   // Generic section container
   section: {
     backgroundColor: 'white',

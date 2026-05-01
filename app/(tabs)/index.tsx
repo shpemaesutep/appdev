@@ -1,19 +1,12 @@
 // Import necessary React and React Native components
-// AFTER: Added Image for logo display, Dimensions for responsive sizing
-import { Animated, Dimensions, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+// AFTER: Added Image for logo display
+import { Animated, Image, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../styles/index.styles";
 
 // Import FontAwesome icons from Expo vector icons library
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { useRef, useEffect } from "react";
-
-// AFTER: Get screen dimensions for responsive sizing
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// AFTER: Responsive scaling utility - scales based on screen width
-// Base design width is 375 (iPhone SE/8 width)
-const scale = (size: number) => (SCREEN_WIDTH / 375) * size;
+import { useRef, useEffect, useState } from "react";
 
 // Define the structure for each pillar item
 type PillarItem = {
@@ -24,7 +17,15 @@ type PillarItem = {
   description: string;
 }
 
+const carouselImages = [
+  require('../../assets/images/SHPEMaes feature.png'),
+  require('../../assets/images/SHPEMaes.png'),
+  require('../../assets/images/shpemaeslogo.png'),
+];
+
 export default function Index() { 
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   // Data array containing all 6 pillars with their respective icons and descriptions
   const pillars: PillarItem[] = [
     // TODO: Populate this array with the 6 pillars data.
@@ -83,6 +84,17 @@ export default function Index() {
     pillars.map(() => new Animated.Value(1))
   ).current;
 
+  // Auto-rotate carousel every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) =>
+        prevIndex === carouselImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const animationsSequence = fadeTranslateValues.map((anim, index) =>
       Animated.timing(anim, {
@@ -111,6 +123,28 @@ export default function Index() {
             style={styles.logo}
             resizeMode="contain"
           />
+        </View>
+
+        <View style={styles.carouselSection}>
+          <Image
+            source={carouselImages[currentImageIndex]}
+            style={styles.carouselImage}
+            resizeMode="cover"
+          />
+          <View style={styles.carouselDots}>
+            {carouselImages.map((_, index) => (
+              <Pressable
+                key={index}
+                accessibilityRole="button"
+                accessibilityLabel={`Show photo ${index + 1}`}
+                onPress={() => setCurrentImageIndex(index)}
+                style={[
+                  styles.carouselDot,
+                  index === currentImageIndex && styles.carouselDotActive,
+                ]}
+              />
+            ))}
+          </View>
         </View>
 
         {/* MISSION SECTION */}
